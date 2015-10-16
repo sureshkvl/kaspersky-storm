@@ -1,0 +1,46 @@
+{
+  "name": "kaspersky-storm",
+  "description": "kaspersky-storm is a module to manage kaspersky ",
+  "author": "Suresh Kumar",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/stormstack/kaspersky-storm.git"
+  },
+  "dependencies": {
+    "json-schema": "0.2.0",
+    "bluebird": "*",
+    "needle": "*"
+  },
+  "engines": {
+    "node": ">=0.6.x"
+  },
+  "stormflash": {
+    "packages": [      
+    ],
+    "services": [
+      "corenova.*"
+    ],
+    "plugin": ""
+  },
+  "main": "./lib/context",
+  "config": {
+    "logfile": "",
+    "storm": {
+      "plugins": [
+        ""
+      ]
+    }
+  },
+  "scripts": {
+    "prepublish": "mkdir -p lib; coffee -o lib -c src"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {},
+  "keywords": [
+    "corenova",
+    "av"
+  ],
+  "contributors": [
+  ]
+}
