@@ -3,18 +3,45 @@ assert = require 'assert'
 Promise = require 'bluebird'
 needle = Promise.promisifyAll(require('needle'))
 
-
 schema_kaspersky = require('./schema').kaspersky
 
 getPromise = ->
     return new Promise (resolve, reject) ->
         resolve()
 
+getCorenovaID = (baseUrl)->
+    needle.getAsync baseUrl + "/corenova", json:true
+    .then (resp) =>
+        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200
+        corenovas = resp[0].body
+        #console.log "corenova id is ",corenovas[0].id
+        return corenovas[0].id
+    .catch (err) =>
+        throw err
+
+
+UpdateKAVRepo = (baseUrl)->    
+    config = require('../package.json').config
+    kavrepo = config.kav_repo ? "http://repo.dev.intercloud.net/kav"
+    data = new Buffer(kavrepo).toString('base64')
+    personality = {}; personality.personality = []
+    kavpersonality = 
+        "path": "/etc/kav_repo",
+        "contents": data,
+        "postxfer": "/usr/sbin/kav_update"
+    personality.personality.push kavpersonality
+    #console.log personality
+    needle.postAsync baseUrl + "/personality", personality, json:true
+    .then (resp) =>
+        throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200                        
+        return true
+    .catch (err) =>
+        throw err
+
 PutConfig = (baseUrl,id,config)->
     needle.putAsync baseUrl + "/corenova/#{id}/transform/include", config, json:true
     .then (resp) =>
         throw new Error 'invalidStatusCode' unless resp[0].statusCode is 200                        
-        #server.history.config = utils.extend {},server.config
         return config
     .catch (err) =>
         throw err
@@ -23,14 +50,17 @@ PutConfig = (baseUrl,id,config)->
 Start =  (context) ->
     throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name and context.service.config
     config = context.service.config
-    #forcefully set the start flag to true 
+    #forcefully set the kaspersky flag to true 
     config.HAVE_KASPERSKY = true
-    id = "500eb587-2731-493a-8afa-ffcefee3bee2"    
     getPromise()
-    .then (resp) =>        
-        return PutConfig(context.baseUrl,id,config)    
+    .then (resp)=>
+        return UpdateKAVRepo(context.baseUrl)
     .then (resp) =>
-        console.log resp
+        return getCorenovaID(context.baseUrl)
+    .then (corenovaid) =>        
+        return PutConfig(context.baseUrl,corenovaid,config)    
+    .then (resp) =>
+        #console.log resp
         return context
     .catch (err) =>
         throw err
@@ -39,14 +69,15 @@ Start =  (context) ->
 Stop =  (context) ->
     throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name and context.service.config
     config = context.service.config
-    #forcefully set the start flag to true 
-    config.HAVE_KASPERSKY = false
-    id = "500eb587-2731-493a-8afa-ffcefee3bee2"    
+    #forcefully set the  kaspersky flag to false
+    config.HAVE_KASPERSKY = false   
     getPromise()
-    .then (resp) =>        
-        return PutConfig(context.baseUrl,id,config)    
+    .then (resp) =>    
+        return getCorenovaID(context.baseUrl)
+    .then (corenovaid) =>     
+        return PutConfig(context.baseUrl,corenovaid,config)    
     .then (resp) =>
-        console.log resp
+        #console.log resp
         return context
     .catch (err) =>
         throw err
@@ -54,45 +85,30 @@ Stop =  (context) ->
 Update =  (context) ->
     throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name and context.service.config
     config = context.service.config
-    id = "500eb587-2731-493a-8afa-ffcefee3bee2"    
     getPromise()
     .then (resp) =>        
-        return PutConfig(context.baseUrl,id,config)    
+        return getCorenovaID(context.baseUrl)
+    .then (corenovaid) =>       
+        return PutConfig(context.baseUrl,corenovaid,config)    
     .then (resp) =>
-        console.log resp
+        #console.log resp
         return context
     .catch (err) =>
         throw err
 
-###
+
 #input to the validate is  { config:{}}
 Validate =  (config) ->
-    throw new Error "openvpn.Validate - invalid input" unless config.servers? and config.clients?
-    for server in config.servers
-        chk = validate server.config, schema['server']        
-        console.log 'server validate result ', chk
-        unless chk.valid
-            throw new Error "server schema check failed"+  chk.valid
-            return  false
-        if server.users?
-            for user in server.users 
-                chk = validate user, schema['user']        
-                console.log 'user validate result ', chk
-                unless chk.valid
-                    throw new Error "user schema check failed"+  chk.valid
-                    return  false
-
-    for client in config.clients
-        chk = validate client.config, schema['client']        
-        console.log 'client validate result ', chk
-        unless chk.valid
-            throw new Error "client schema check failed"+  chk.valid
-            return  false
-
-    return true
-###
+    throw new Error "kaspersky.Validate - invalid input" unless config?
+    chk = validate config ,schema_kaspersky
+    console.log 'server validate result ', chk
+    unless chk.valid
+        throw new Error "server schema check failed"+  chk.valid
+        return  false
+    else
+        return true
 
 module.exports.start = Start
 module.exports.stop = Stop
 module.exports.update = Update
-#module.exports.validate = Validate
+module.exports.validate = Validate

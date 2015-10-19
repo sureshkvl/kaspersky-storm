@@ -9,8 +9,9 @@
   },
   "dependencies": {
     "json-schema": "0.2.0",
-    "bluebird": "*",
-    "needle": "*"
+    "bluebird": "2.10.2",
+    "needle": "0.10.0",
+    "jsonfile": "2.2.3"
   },
   "engines": {
     "node": ">=0.6.x"
@@ -25,12 +26,7 @@
   },
   "main": "./lib/context",
   "config": {
-    "logfile": "",
-    "storm": {
-      "plugins": [
-        ""
-      ]
-    }
+    "kav_repo" :"http://repo.dev.intercloud.net/kav"    
   },
   "scripts": {
     "prepublish": "mkdir -p lib; coffee -o lib -c src"
