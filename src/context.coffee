@@ -48,17 +48,22 @@ PutConfig = (baseUrl,id,config)->
 
 
 Start =  (context) ->
-    throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name and context.service.config
-    config = context.service.config
+    throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name
+
+    configObj = context.service.factoryConfig?.config
+    config = configObj[context.service.name]    
+    kavconfig = config.coreConfig if config.enable and config.coreConfig        
+    throw new Error 'openvpn-storm.Start missingParams -coreConfig' unless kavconfig
+
     #forcefully set the kaspersky flag to true 
-    config.HAVE_KASPERSKY = true
+    kavconfig.HAVE_KASPERSKY = true
     getPromise()
     .then (resp)=>
         return UpdateKAVRepo(context.baseUrl)
     .then (resp) =>
         return getCorenovaID(context.baseUrl)
     .then (corenovaid) =>        
-        return PutConfig(context.baseUrl,corenovaid,config)    
+        return PutConfig(context.baseUrl,corenovaid,kavconfig)    
     .then (resp) =>
         #console.log resp
         return context
@@ -67,15 +72,18 @@ Start =  (context) ->
 
 
 Stop =  (context) ->
-    throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name and context.service.config
-    config = context.service.config
+    throw new Error 'openvpn-storm.Stop missingParams' unless context.bInstalledPackages and context.service.name and context.service.factoryConfig
+    configObj = context.service.factoryConfig?.config
+    config = configObj[context.service.name]    
+    kavconfig = config.coreConfig if config.enable and config.coreConfig        
+    throw new Error 'openvpn-storm.Stop missingParams -coreConfig' unless kavconfig
     #forcefully set the  kaspersky flag to false
-    config.HAVE_KASPERSKY = false   
+    kavconfig.HAVE_KASPERSKY = false   
     getPromise()
     .then (resp) =>    
         return getCorenovaID(context.baseUrl)
     .then (corenovaid) =>     
-        return PutConfig(context.baseUrl,corenovaid,config)    
+        return PutConfig(context.baseUrl,corenovaid,kavconfig)    
     .then (resp) =>
         #console.log resp
         return context
@@ -83,13 +91,17 @@ Stop =  (context) ->
         throw err
 
 Update =  (context) ->
-    throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name and context.service.config
-    config = context.service.config
+    throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name and context.policyConfig
+    configObj = context.policyConfig
+    config = configObj[context.service.name]    
+    kavconfig = config.coreConfig if config.enable and config.coreConfig
+    throw new Error 'openvpn-storm.Update missingParams -policyConfig' unless kavconfig
+
     getPromise()
     .then (resp) =>        
         return getCorenovaID(context.baseUrl)
     .then (corenovaid) =>       
-        return PutConfig(context.baseUrl,corenovaid,config)    
+        return PutConfig(context.baseUrl,corenovaid,kavconfig)    
     .then (resp) =>
         #console.log resp
         return context
@@ -100,7 +112,11 @@ Update =  (context) ->
 #input to the validate is  { config:{}}
 Validate =  (config) ->
     throw new Error "kaspersky.Validate - invalid input" unless config?
-    chk = validate config ,schema_kaspersky
+    policyConfig = {}
+    if config.enable and config.coreConfig
+        policyConfig = config.coreConfig
+
+    chk = validate policyConfig ,schema_kaspersky
     console.log 'server validate result ', chk
     unless chk.valid
         throw new Error "server schema check failed"+  chk.valid

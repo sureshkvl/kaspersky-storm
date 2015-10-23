@@ -7,7 +7,7 @@ Promise = require 'bluebird'
 context = {}
 
 
-input = 
+input1 = 
 	{
     	"baseUrl": "http://192.168.122.217:5000",
     	"bInstalledPackages": true,
@@ -17,6 +17,32 @@ input =
         	"config": {}
             }
 	}
+
+input = 
+{
+	"baseUrl": "http://192.168.122.217:5000",
+	"bInstalledPackages": true,
+	"bFactoryPush": false,
+	"service":{
+		"name": "kaspersky",
+		"factoryConfig": {
+			"config": {
+				"kaspersky": {
+					"enable": true,
+					"coreConfig": {
+					}
+				}
+			}
+		}
+	}
+	"policyConfig": {
+		"kaspersky":  {
+			"enable": true,
+			"coreConfig" : {
+			}
+		}
+	}
+}
 
 
 getPromise = ->
@@ -52,9 +78,9 @@ stopcall = (input)->
 updatecall = (input)->
 	getPromise()
 	.then (resp) =>
-		input.service.config.HTTP_AV_SCAN = true
-		input.service.config.KASPERSKY_HTTP_UPLOAD = true
-		input.service.config.KASPERSKY_HTTP_DOWNLOAD = true
+		input.policyConfig.kaspersky.coreConfig.HTTP_AV_SCAN = true
+		input.policyConfig.kaspersky.coreConfig.KASPERSKY_HTTP_UPLOAD = true
+		input.policyConfig.kaspersky.coreConfig.KASPERSKY_HTTP_DOWNLOAD = true
 		jsonfile.writeFileSync("/tmp/kss-update-input.json",input,{spaces: 2})
 		return Update input
 	.catch (err) =>
@@ -63,11 +89,6 @@ updatecall = (input)->
 		jsonfile.writeFileSync("/tmp/kss-update-output.json",resp,{spaces: 2})
 		console.log "result from Update:\n ", JSON.stringify resp
 	.done
-
-
-
-
-
 
 
 
@@ -87,7 +108,7 @@ kavconfig =
 		"encoding" : "base64"
 		"data" : "dGVtcGxhdGUudmlydXMgY29udGVudA=="
 #kav1config = {}
-input.service.config = kavconfig
+input.service.factoryConfig.config.kaspersky.coreConfig = kavconfig
 startcall(input)
 setTimeout(updatecall,30000,input)
 setTimeout(stopcall,60000,input)
