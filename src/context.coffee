@@ -48,12 +48,12 @@ PutConfig = (baseUrl,id,config)->
 
 
 Start =  (context) ->
-    throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name
+    throw new Error 'kaspersky-storm.Start missingParams' unless context.bInstalledPackages and context.service.name
 
     configObj = context.service.factoryConfig?.config
     config = configObj[context.service.name]    
     kavconfig = config.coreConfig if config.enable and config.coreConfig        
-    throw new Error 'openvpn-storm.Start missingParams -coreConfig' unless kavconfig
+    throw new Error 'kaspersky-storm.Start missingParams -coreConfig' unless kavconfig
 
     #forcefully set the kaspersky flag to true 
     kavconfig.HAVE_KASPERSKY = true
@@ -72,11 +72,11 @@ Start =  (context) ->
 
 
 Stop =  (context) ->
-    throw new Error 'openvpn-storm.Stop missingParams' unless context.bInstalledPackages and context.service.name and context.service.factoryConfig
+    throw new Error 'kaspersky-storm.Stop missingParams' unless context.bInstalledPackages and context.service.name and context.service.factoryConfig
     configObj = context.service.factoryConfig?.config
     config = configObj[context.service.name]    
     kavconfig = config.coreConfig if config.enable and config.coreConfig        
-    throw new Error 'openvpn-storm.Stop missingParams -coreConfig' unless kavconfig
+    throw new Error 'kaspersky-storm.Stop missingParams -coreConfig' unless kavconfig
     #forcefully set the  kaspersky flag to false
     kavconfig.HAVE_KASPERSKY = false   
     getPromise()
@@ -91,11 +91,11 @@ Stop =  (context) ->
         throw err
 
 Update =  (context) ->
-    throw new Error 'openvpn-storm.Start missingParams' unless context.bInstalledPackages and context.service.name and context.policyConfig
+    throw new Error 'kaspersky-storm.Start missingParams' unless context.bInstalledPackages and context.service.name and context.policyConfig
     configObj = context.policyConfig
     config = configObj[context.service.name]    
     kavconfig = config.coreConfig if config.enable and config.coreConfig
-    throw new Error 'openvpn-storm.Update missingParams -policyConfig' unless kavconfig
+    throw new Error 'kaspersky-storm.Update missingParams -policyConfig' unless kavconfig
 
     getPromise()
     .then (resp) =>        
